@@ -30,6 +30,8 @@
     conn))
 
 (defn write [conn msg]
-  (doto (:out conn)
-    (.println (->msg msg))
-    (.flush)))
+  (let [message (->msg msg)]
+    (println "sending message:" message)
+    (doto (:out conn)
+      (.println message)
+      (.flush))))

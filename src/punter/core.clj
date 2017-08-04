@@ -2,9 +2,10 @@
   (:gen-class)
   (:require [clojure.tools.namespace.repl :refer [refresh]] 
             [cheshire.core :refer [generate-string parse-string]]
-            [punter.tcp :as tcp]))
+            [punter.tcp :as tcp]
+            [punter.api :as api]))
 
-(def server {:name "punter.inf.ed.ac.uk" :port 9010})
+(def server {:name "punter.inf.ed.ac.uk" :port 9001})
 
 (def username "Lambda Riot")
 
@@ -15,10 +16,6 @@
     (println "get state:" state)))
 
 (defn connect []
-  (tcp/connect server tcp/print-handler))
-
-;; api
-
-(defn greet [ch name]
-  (let [msg (generate-string {:me name})] 
-    (tcp/write ch msg)))  
+  (let [c (tcp/connect server tcp/print-handler)]
+    (api/init c username)
+    c))
