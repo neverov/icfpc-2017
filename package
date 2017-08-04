@@ -1,0 +1,4 @@
+#!/bin/bash
+
+lein uberjar
+tar czvf icfp-b095d24a-ba0e-4200-bcc4-623eeb38421c.tar.gz .
