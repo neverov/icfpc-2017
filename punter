@@ -1,1 +1,3 @@
-java -jar target/uberjar/punter-0.1.0-SNAPSHOT-standalone.jar 
+#!/bin/bash
+
+lein trampoline run $@

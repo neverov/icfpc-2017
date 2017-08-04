@@ -1,6 +1,7 @@
+#!/bin/bash
+
 wget https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
 chmod a+x lein
 mkdir bin
 mv lein bin/
 ./bin/lein
-lein uberjar
