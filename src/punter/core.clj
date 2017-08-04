@@ -1,7 +1,9 @@
 (ns punter.core
-  (:gen-class))
+  (:gen-class)
+  (:require [cheshire.core :refer [parse-string]]))
 
 (defn -main
-  "I don't do a whole lot ... yet."
-  [& args]
-  (println args))
+  [raw-state & args]
+  (println "raw state:" raw-state)
+  (let [state (parse-string raw-state true)]
+    (println "get state:" state)))
