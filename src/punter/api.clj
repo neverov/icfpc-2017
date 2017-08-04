@@ -4,17 +4,21 @@
             [cheshire.core :refer [generate-string parse-string]]
             [punter.tcp :as tcp]))
 
+(defn- send-msg [ch payload]
+    (tcp/write ch (generate-string payload)))
+
 (defn init [ch name]
-  (let [payload {:me name} 
-        msg (generate-string payload)]
-    (tcp/write ch msg)))  
+  (let [payload {:me name}] 
+    (send-msg ch payload)))
+
+(defn ready [ch punter]
+  (let [payload {:ready punter}]
+    (send-msg ch payload)))
 
 (defn move [ch punter source target]
-  (let [payload {:claim {:punter punter :source source :target target}}
-        msg (generate-string payload)]
-    (tcp/write ch msg)))
-
+  (let [payload {:claim {:punter punter :source source :target target}}]
+    (send-msg ch payload)))
+    
 (defn pass [ch punter]
-  (let [payload {:pass {:punter punter}}
-        msg (generate-string payload)]
-    (tcp/write ch msg)))
+  (let [payload {:pass {:punter punter}}]
+    (send-msg ch payload)))
