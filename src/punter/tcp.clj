@@ -4,15 +4,11 @@
             [clojure.java.io :as io])
   (:import (java.net Socket)))
 
-(defn print-handler [conn]
-  (while (nil? (:exit conn))
-    (if-let [msg (.readLine (:in conn))]
-      (println "received raw message:" msg))))
-
 (defn connect [host port]
   (let [socket (Socket. host port)
         in (io/reader (.getInputStream socket))
         out (io/writer (.getOutputStream socket))]
+    (.setSoTimeout socket 10000)
     {:in in :out out}))
 
 (defn write [conn msg]

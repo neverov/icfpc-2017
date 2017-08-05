@@ -1,18 +1,16 @@
 (ns punter.core
   (:gen-class)
   (:require [clojure.tools.namespace.repl :refer [refresh]] 
-            [cheshire.core :refer [generate-string parse-string]]
-            [punter.tcp :as tcp]
             [punter.api :as api]
-            [punter.util :refer [log]]))
+            [punter.tcp :as tcp]))
 
 (def host "punter.inf.ed.ac.uk")
 (def username "Lambda Riot")
 
 (defn -main [& args]
-  (log "starting Lambda Riot punter")
-  (log "args:" args)
-  (log "punter initialized")
+  (println "starting Lambda Riot punter")
+  (println "args:" args)
+  (println "punter initialized")
   (api/init nil username)
   (doseq [ln (line-seq (java.io.BufferedReader. *in*))]
     (println ln)))
@@ -38,15 +36,16 @@
     state))
 
 (defn play [port]
-  (log "connecting:" (str host ":" port))  
+  (println "connecting:" (str host ":" port))  
   (let [conn (tcp/connect host port)
         state (handshake conn)
         move (atom (api/recv-msg conn))
-        _ (api/pass conn)
+        _ (api/pass conn (:punter state))
         _ (println move)]
-    (while (not (stop? @move))
-      (let [next-move (api/recv-msg conn)]
+    (while true
+      (let [next-move (api/recv-msg conn)
+            punter (:punter state)]
         (println next-move)
         (swap! move next-move)
-        (api/pass conn)))
+        (api/pass conn punter)))
     conn))
