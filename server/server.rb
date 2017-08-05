@@ -117,6 +117,8 @@ class Game
   end
 
   def finished?
+    p @occupied
+    p @edges_count
     @occupied == @edges_count
   end
 
@@ -172,7 +174,7 @@ class Server
       write(client, punter: i, punters: nclients, map: game.map)
       msg = read(client)
       if msg["ready"] != i
-        puts "client #{i} not ready"
+        puts "client #{i} is not ready"
         clear
         return
       end
