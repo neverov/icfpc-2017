@@ -6,7 +6,7 @@
 
 (defn- send-msg [ch payload]
   (let [msg (generate-string payload)
-        length (count string)]
+        length (count msg)]
     (tcp/write ch (str length ":" msg))))
 
 (defn init [ch name]
