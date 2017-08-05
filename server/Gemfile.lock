@@ -1,0 +1,13 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    pqueue (2.1.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  pqueue
+
+BUNDLED WITH
+   1.15.3

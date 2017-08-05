@@ -3,17 +3,20 @@
   (:require [clojure.tools.namespace.repl :refer [refresh]] 
             [cheshire.core :refer [generate-string parse-string]]
             [punter.tcp :as tcp]
-            [punter.api :as api]))
+            [punter.api :as api]
+            [punter.util :refer [log]]))
 
 (def server {:name "punter.inf.ed.ac.uk" :port 9002})
 
 (def username "Lambda Riot")
 
-(defn -main
-  [raw-state & args]
-  (println "raw state:" raw-state)
-  (let [state (parse-string raw-state true)]
-    (println "get state:" state)))
+(defn -main [& args]
+  (log "starting Lambda Riot punter")
+  (log "args:" args)
+  (log "punter initialized")
+  (api/init nil username)
+  (doseq [ln (line-seq (java.io.BufferedReader. *in*))]
+    (println ln)))
 
 (defn you? [msg]
   (contains? msg :you))
@@ -44,6 +47,8 @@
           :else (println "TBD"))))))
         
 (defn connect [port]
-  (let [conn (tcp/connect server session-handler)]
+  (let [server-map (assoc server :port port)
+        _ (log "connecting:" server-map)  
+        conn (tcp/connect server-map session-handler)]
     (api/init conn username)
     conn))

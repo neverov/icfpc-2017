@@ -2,25 +2,25 @@
   (:gen-class)
   (:require [clojure.tools.namespace.repl :refer [refresh]]
             [cheshire.core :refer [generate-string parse-string]]
-            [punter.tcp :as tcp]))
+            [punter.tcp :as tcp]
+            [punter.util :refer [log]]))
 
 (defn- send-msg [ch payload]
-  (let [msg (generate-string payload)
-        length (count msg)]
-    (tcp/write ch (str length ":" msg))))
+  (let [body (generate-string payload)
+        length (count body)
+        msg (str length ":" body)]
+    (tcp/write ch msg)))
+    ;(log "sending message:" msg)
+    ;(println msg)))
 
 (defn init [ch name]
-  (let [payload {:me name}]
-    (send-msg ch payload)))
+  (send-msg ch {:me name}))
 
 (defn ready [ch punter]
-  (let [payload {:ready punter}]
-    (send-msg ch payload)))
+  (send-msg ch {:ready punter}))
 
 (defn move [ch punter source target]
-  (let [payload {:claim {:punter punter :source source :target target}}]
-    (send-msg ch payload)))
+  (send-msg ch {:claim {:punter punter :source source :target target}}))
 
 (defn pass [ch punter]
-  (let [payload {:pass {:punter punter}}]
-    (send-msg ch payload)))
+  (send-msg ch {:pass {:punter punter}}))
