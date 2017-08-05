@@ -9,7 +9,7 @@
   e.g. [#{1 2 3} [[1 5] [1 3] [1 4]]] -> #{4 5}"
   [sites rivers]
   (->> (for [r rivers
-             :let [river (set r)
+             :let [river (set (take 2 r))
                    intersection (set/intersection sites river)]]
          (when (not-empty intersection)
            (first (set/difference river sites))))
@@ -48,3 +48,38 @@
   (into {} (for [mine mines
                  :let [dmap (distance-map sites rivers mine)]]
              [mine dmap])))
+
+(defn punter-sites
+  "given a set of sites and rivers, starting site and punter-id
+  returns a set of sites, connected to given site via punter-owned rivers"
+  [sites rivers punter start-site]
+  (let [owned-rivers (filter #(= punter (get % 2)) rivers)]
+    (loop [covered-sites #{start-site}]
+      (let [adjs (adjacent-sites covered-sites owned-rivers)]
+        (if (empty? adjs)
+          covered-sites
+          (recur (set/union covered-sites adjs)))))))
+
+(defn punter-mine-score
+  "given a set of connected sites and distance map for the mine,
+  calculate punters score"
+  [distance-map sites]
+  (when-not (empty? sites)
+    (->> sites
+      (map #(get distance-map %))
+      (map #(* % %))
+      (reduce +))))
+
+(defn punter-total-score
+  "given a game state and punter id,
+  calculate punters score"
+  [{:keys [distance-maps sites rivers mines] :as game-state} punter-id]
+  (let [owned-network (->> mines
+                           (map (fn [mine]
+                                  [mine (punter-sites sites rivers punter-id mine)])))
+        network-scores (->> owned-network
+                            (map (fn [[mine sites]]
+                                   (punter-mine-score
+                                     (get distance-maps mine)
+                                     sites))))]
+    (reduce + 0 network-scores)))

@@ -40,4 +40,35 @@
            (utils/distance-maps
             [1 2 3 4 5 6 7 8 9]
             [[1 2] [1 3] [2 4] [1 3] [4 5] [6 7] [7 8] [6 9]]
-            [2 6])))))
+            [2 6]))))
+
+  (testing "should return sites reached by punter's rivers from the given site"
+    (is (= #{1 4 3 2}
+           (utils/punter-sites
+            [1 2 3 4 5]
+            [[1 2 :jack] [1 3 :jack] [2 4 :jack] [2 3] [4 5]]
+            :jack
+            1))))
+
+  (testing "should return punter's score for a given mine"
+    (let [sites [1 2 3 4 5]
+          rivers [[1 2 :jack] [1 3 :jack] [2 4 :jack] [2 3] [4 5]]
+          punter :jack
+          mine 1
+          distance-map (utils/distance-map sites rivers mine)
+          owned-sites (utils/punter-sites sites rivers punter mine)]
+      (is (= 6 (utils/punter-mine-score distance-map owned-sites)))))
+
+  (testing "should calculate current score for punter"
+    (let [sites [1 2 3 4 5 6 7]
+          rivers [[1 2 :jack] [1 3 :jack] [2 4 :jack] [2 3] [4 5] [6 7 :jack] [5 7 :jack]]
+          mines [1 5]
+          distance-maps (utils/distance-maps sites rivers mines)
+          punter :jack]
+      (is (= 11
+             (utils/punter-total-score
+              {:sites sites
+               :rivers rivers
+               :mines mines
+               :distance-maps distance-maps}
+              punter))))))
