@@ -15,16 +15,35 @@
   (let [state (parse-string raw-state true)]
     (println "get state:" state)))
 
+(defn you? [msg]
+  (contains? msg :you))
+
+(defn init-state? [msg]
+  (and (contains? msg :punter)
+       (contains? msg :punters)
+       (contains? msg :map)))
+
+(defn handle-you [msg]
+  (let [name (:you msg)]
+    (println "got you:" name)))
+
+(defn handle-init-state [conn msg]
+  (let [punter (:punter msg)]
+    (println "got init state")
+    (api/ready conn punter)))
+
 (defn session-handler [conn]
   (while (nil? (:exit conn))
     (when-let [line (.readLine (:in conn))]
-      (println "got line:" line)
       (let [payload (second (clojure.string/split line #":" 2))
-            _ (println payload)
-            msg (parse-string payload true)]
-        (println "received message:" msg)))))
-
-(defn connect []
-  (let [c (tcp/connect server session-handler)]
-    (api/init c username)
-    c))
+            msg (parse-string payload true)]            
+        (println "received message:" msg)
+        (cond
+          (you? msg) (handle-you msg)
+          (init-state? msg) (handle-init-state conn msg) 
+          :else (println "TBD"))))))
+        
+(defn connect [port]
+  (let [conn (tcp/connect server session-handler)]
+    (api/init conn username)
+    conn))
