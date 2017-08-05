@@ -5,8 +5,7 @@
 (defn move
   "random strategy: capture random vacant river"
   [game-state]
-  (let [{:keys [punter punters map]} game-state
-        {:keys [sites mines  rivers]} map
+  (let [{:keys [punter punters sites mines rivers]} game-state
         vacant-rivers (filter #(nil? (get % 2)) rivers)
         target-river (take 2 (rand-nth vacant-rivers))]
-    {:move {:claim {:punter punter :source (first target-river) :target (last target-river)}}}))
+    {:claim {:punter punter :source (first target-river) :target (last target-river)}}))
