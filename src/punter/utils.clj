@@ -3,6 +3,12 @@
   (:require [clojure.tools.namespace.repl :refer [refresh]]
             [clojure.set :as set]))
 
+(defn chance
+  "returns the item with a given chance, otherwise nil"
+  [chance item]
+  (when (< (rand) chance)
+    item))
+
 (defn adjacent-sites
   "given a set of sites and rivers
   returns a set of sites, that are adjacent to given ones, but not contained in them.
