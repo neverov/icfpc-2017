@@ -8,7 +8,7 @@
   (let [socket (Socket. host port)
         in (io/reader (.getInputStream socket))
         out (io/writer (.getOutputStream socket))]
-    (.setSoTimeout socket 10000)
+    (.setSoTimeout socket 10000) ; wait 10 sec for the game to start
     {:in in :out out}))
 
 (defn write [conn msg]
