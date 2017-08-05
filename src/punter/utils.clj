@@ -89,3 +89,14 @@
                                      (get distance-maps mine)
                                      sites))))]
     (reduce + 0 network-scores)))
+
+(defn scoreboard
+  "given a game state calculate scores for all punters"
+  [{:keys [distance-maps sites rivers mines punters] :as game-state}]
+  (let [scores (->> punters
+                    (map #(do [% (punter-total-score game-state %)]))
+                    (into {}))]
+    {:scores (reduce-kv (fn [coll punter score]
+                          (conj coll {:punter punter :score score}))
+                        []
+                        scores)}))

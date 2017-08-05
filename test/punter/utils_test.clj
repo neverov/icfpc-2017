@@ -71,4 +71,20 @@
                :rivers rivers
                :mines mines
                :distance-maps distance-maps}
-              punter))))))
+              punter)))))
+
+  (testing "should calculate total scoreboard"
+    (let [sites [0 1 2 3 4 5 6 7]
+          rivers [[0 1 :bob] [0 7 :bob] [1 2 :alice] [1 3 :alice]
+                  [1 7 :alice] [2 3 :bob] [3 4 :alice] [3 5 :bob]
+                  [4 5 :alice] [5 6 :bob] [5 7 :alice] [6 7 :bob]]
+          mines [1 5]
+          distance-maps (utils/distance-maps sites rivers mines)
+          punters [:alice :bob]]
+      (is (= {:scores [{:punter :alice, :score 22} {:punter :bob, :score 27}]}
+             (utils/scoreboard
+              {:sites sites
+               :rivers rivers
+               :mines mines
+               :distance-maps distance-maps
+               :punters punters}))))))
