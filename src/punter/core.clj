@@ -1,6 +1,7 @@
 (ns punter.core
   (:gen-class)
   (:require [clojure.tools.namespace.repl :refer [refresh]] 
+            [punter.strategies.random :as strategy]
             [punter.api :as api]
             [punter.tcp :as tcp]
             [punter.util :refer [log]]))
@@ -15,14 +16,6 @@
   (api/init nil username)
   (doseq [ln (line-seq (java.io.BufferedReader. *in*))]
     (log ln)))
-
-(defn you? [msg]
-  (contains? msg :you))
-
-(defn init-state? [msg]
-  (and (contains? msg :punter)
-       (contains? msg :punters)
-       (contains? msg :map)))
 
 (defn stop? [msg]
   (contains? msg :stop))
@@ -47,6 +40,7 @@
     (while (not (stop? @move))
       (reset! move (api/recv-msg conn))
       (log "received move:" @move) 
-      (api/pass conn punter))
-    (log "game finished")
+      (let [next-move (strategy/move state)]
+        (api/send-msg conn next-move)))
+    (log "player" punter ", game finished, scores:" (:scores (:stop @move)))
     conn))
