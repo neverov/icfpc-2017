@@ -6,8 +6,7 @@
             [punter.api :as api]
             [punter.util :refer [log]]))
 
-(def server {:name "punter.inf.ed.ac.uk" :port 9002})
-
+(def host "punter.inf.ed.ac.uk")
 (def username "Lambda Riot")
 
 (defn -main [& args]
@@ -26,29 +25,28 @@
        (contains? msg :punters)
        (contains? msg :map)))
 
-(defn handle-you [msg]
-  (let [name (:you msg)]
-    (println "got you:" name)))
+(defn stop? [msg]
+  (contains? msg :stop))
 
-(defn handle-init-state [conn msg]
-  (let [punter (:punter msg)]
-    (println "got init state")
-    (api/ready conn punter)))
+(defn handshake [conn]
+  (let [_ (api/init conn username)
+        you (api/recv-you conn)
+        _ (println "received you:" you)
+        state (api/recv-state conn)
+        _ (println "received initial game state:" state)
+        _ (api/ready conn (:punter state))]
+    state))
 
-(defn session-handler [conn]
-  (while (nil? (:exit conn))
-    (when-let [line (.readLine (:in conn))]
-      (let [payload (second (clojure.string/split line #":" 2))
-            msg (parse-string payload true)]            
-        (println "received message:" msg)
-        (cond
-          (you? msg) (handle-you msg)
-          (init-state? msg) (handle-init-state conn msg) 
-          :else (println "TBD"))))))
-        
-(defn connect [port]
-  (let [server-map (assoc server :port port)
-        _ (log "connecting:" server-map)  
-        conn (tcp/connect server-map session-handler)]
-    (api/init conn username)
+(defn play [port]
+  (log "connecting:" (str host ":" port))  
+  (let [conn (tcp/connect host port)
+        state (handshake conn)
+        move (atom (api/recv-msg conn))
+        _ (api/pass conn)
+        _ (println move)]
+    (while (not (stop? @move))
+      (let [next-move (api/recv-msg conn)]
+        (println next-move)
+        (swap! move next-move)
+        (api/pass conn)))
     conn))

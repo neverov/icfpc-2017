@@ -5,22 +5,32 @@
             [punter.tcp :as tcp]
             [punter.util :refer [log]]))
 
-(defn- send-msg [ch payload]
+(defn send-msg [conn payload]
   (let [body (generate-string payload)
-        length (count body)
-        msg (str length ":" body)]
-    (tcp/write ch msg)))
-    ;(log "sending message:" msg)
-    ;(println msg)))
+        length (inc (count body))
+        msg (str length ":" body "\n")]
+    (tcp/write conn msg)))
 
-(defn init [ch name]
-  (send-msg ch {:me name}))
+(defn recv-msg [conn]
+  (let [resp (tcp/read-line conn)
+        payload (second (clojure.string/split resp #":" 2))
+        msg (parse-string payload true)]
+    msg))
 
-(defn ready [ch punter]
-  (send-msg ch {:ready punter}))
+(defn init [conn name]
+  (send-msg conn {:me name}))
 
-(defn move [ch punter source target]
-  (send-msg ch {:claim {:punter punter :source source :target target}}))
+(defn recv-you [conn]
+  (recv-msg conn))
 
-(defn pass [ch punter]
-  (send-msg ch {:pass {:punter punter}}))
+(defn recv-state [conn]
+  (recv-msg conn))
+
+(defn ready [conn punter]
+  (send-msg conn {:ready punter}))
+
+(defn move [conn punter source target]
+  (send-msg conn {:claim {:punter punter :source source :target target}}))
+
+(defn pass [conn punter]
+  (send-msg conn {:pass {:punter punter}}))
