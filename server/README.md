@@ -2,4 +2,4 @@
 
 ## Usage
 
-./server.rb -m map_name.json -n number-of-users
+./server.rb -m ../maps/sample.json -u 2
