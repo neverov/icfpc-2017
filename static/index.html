@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Punters game visualizer</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+      body {
+        color: #ffffff;
+        font-family:Monospace;
+        font-size:13px;
+        text-align:center;
+        font-weight: bold;
+
+        background-color: #000000;
+        margin: 0px;
+        overflow: hidden;
+      }
+      #info {
+        color: #fff;
+        padding: 5px;
+        z-index:100;
+      }
+      #container {
+        width: 800px;
+        height: 600px;
+        margin: auto;
+        padding: 0;
+        user-select: none;
+        cursor: -webkit-grab;
+        cursor: grab;
+      }
+      #moves_slider {
+        width: 600px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="info">Punters game visualizer</div>
+    <div id="container"></div>
+    <div>
+      <p>Scrobble moves</p>
+      <input id="moves_slider" type="range" min="0" max="10" value="0" disabled>
+      <br>
+      <span>Move <span id="move_number">0</span></span>
+    </div>
+
+    <script src="https://threejs.org/build/three.js"></script>
+
+    <script src="https://threejs.org/examples/js/Detector.js"></script>
+
+    <script>
+      var GAME_MAP = {
+        "sites": [
+          {"id":0,"x":1.0,"y":0.0},
+          {"id":1,"x":2.0,"y":0.0},
+          {"id":2,"x":0.8660254037844387,"y":0.49999999999999997},
+          {"id":3,"x":1.7320508075688775,"y":0.9999999999999999},
+          {"id":4,"x":0.5000000000000001,"y":0.8660254037844386},
+          {"id":5,"x":1.0000000000000003,"y":1.7320508075688773},
+          {"id":6,"x":6.123233995736766e-17,"y":1.0},
+          {"id":7,"x":1.2246467991473533e-16,"y":2.0},
+          {"id":8,"x":-0.4999999999999998,"y":0.8660254037844388},
+          {"id":9,"x":-0.9999999999999996,"y":1.7320508075688777},
+          {"id":10,"x":-0.8660254037844387,"y":0.49999999999999997},
+          {"id":11,"x":-1.7320508075688775,"y":0.9999999999999999},
+          {"id":12,"x":-1.0,"y":1.2246467991473533e-16},
+          {"id":13,"x":-2.0,"y":2.4492935982947066e-16},
+          {"id":14,"x":-0.8660254037844386,"y":-0.5000000000000001},
+          {"id":15,"x":-1.7320508075688773,"y":-1.0000000000000003},
+          {"id":16,"x":-0.5000000000000004,"y":-0.8660254037844384},
+          {"id":17,"x":-1.0000000000000009,"y":-1.7320508075688768},
+          {"id":18,"x":-1.8369701987210298e-16,"y":-1.0},
+          {"id":19,"x":-3.6739403974420596e-16,"y":-2.0},
+          {"id":20,"x":0.5,"y":-0.8660254037844386},
+          {"id":21,"x":1.0,"y":-1.7320508075688773},
+          {"id":22,"x":0.8660254037844384,"y":-0.5000000000000004},
+          {"id":23,"x":1.7320508075688768,"y":-1.0000000000000009},
+          {"id":24,"x":1.0,"y":-2.4492935982947066e-16},
+          {"id":25,"x":2.0,"y":-4.898587196589413e-16},
+          {"id":26,"x":0.0,"y":0.0}
+        ],
+        "mines": [12, 18, 24, 6],
+        "rivers": [
+          {"source":0,"target":26},
+          {"source":0,"target":2},
+          {"source":0,"target":1},
+          {"source":1,"target":3},
+          {"source":1,"target":2},
+          {"source":2,"target":26},
+          {"source":2,"target":4},
+          {"source":2,"target":3},
+          {"source":3,"target":5},
+          {"source":3,"target":4},
+          {"source":4,"target":26},
+          {"source":4,"target":6},
+          {"source":4,"target":5},
+          {"source":5,"target":7},
+          {"source":5,"target":6},
+          {"source":6,"target":26},
+          {"source":6,"target":8},
+          {"source":6,"target":7},
+          {"source":7,"target":9},
+          {"source":7,"target":8},
+          {"source":8,"target":26},
+          {"source":8,"target":10},
+          {"source":8,"target":9},
+          {"source":9,"target":11},
+          {"source":9,"target":10},
+          {"source":10,"target":26},
+          {"source":10,"target":12},
+          {"source":10,"target":11},
+          {"source":11,"target":13},
+          {"source":11,"target":12},
+          {"source":12,"target":26},
+          {"source":12,"target":14},
+          {"source":12,"target":13},
+          {"source":13,"target":15},
+          {"source":13,"target":14},
+          {"source":14,"target":26},
+          {"source":14,"target":16},
+          {"source":14,"target":15},
+          {"source":15,"target":17},
+          {"source":15,"target":16},
+          {"source":16,"target":26},
+          {"source":16,"target":18},
+          {"source":16,"target":17},
+          {"source":17,"target":19},
+          {"source":17,"target":18},
+          {"source":18,"target":26},
+          {"source":18,"target":20},
+          {"source":18,"target":19},
+          {"source":19,"target":21},
+          {"source":19,"target":20},
+          {"source":20,"target":26},
+          {"source":20,"target":22},
+          {"source":20,"target":21},
+          {"source":21,"target":23},
+          {"source":21,"target":22},
+          {"source":22,"target":26},
+          {"source":22,"target":24},
+          {"source":22,"target":23},
+          {"source":23,"target":25},
+          {"source":23,"target":24},
+          {"source":24,"target":26},
+          {"source":24,"target":0},
+          {"source":24,"target":25},
+          {"source":25,"target":1},
+          {"source":25,"target":0}
+        ]
+      };
+      var MOVES = [
+        {"claim": {"punter": 4, "source": 2, "target": 1}},
+        {"claim": {"punter": 5, "source": 0, "target": 26}},
+        {"claim": {"punter": 4, "source": 1, "target": 3}},
+        {"claim": {"punter": 5, "source": 0, "target": 2}},
+        {"claim": {"punter": 4, "source": 4, "target": 3}},
+        {"claim": {"punter": 5, "source": 4, "target": 6}},
+      ];
+    </script>
+    <script>
+
+      if (!Detector.webgl) Detector.addGetWebGLMessage();
+
+      var renderer, scene, camera;
+
+      var CAMERA_CONTROL_ACTIVE = false;
+      var CAMERA_CONTROL_SENSITIVITY = 0.0185;
+      var CAMERA_ZOOM = 1;
+      var CAMERA_FOV = 25;
+      var CAMERA_ZOOM_SENSITIVITY = 0.005;
+
+      var MOVES_SCROBBLER = document.getElementById('moves_slider');
+      var CURRENT_MOVE = document.getElementById('move_number');
+      MOVES_SCROBBLER.max = MOVES.length;
+      MOVES_SCROBBLER.disabled = null;
+      MOVES_SCROBBLER.addEventListener('input', function (ev) {
+        var moveNumber = parseInt(ev.target.value);
+        goToMove(moveNumber);
+      });
+
+      var sites = {};
+      var mines = {};
+      var rivers = {};
+
+      var PLAYER_COLORS = [
+        0xEC2E1B,
+        0xE07540,
+        0xE3CC6C,
+        0x36C91A,
+        0x55A9C9,
+        0x2C81F2,
+        0x793FF4,
+        0xC14EBE,
+        0xB54F7B,
+        0xE6ABC0,
+        0xFFE2DA,
+        0x5AFB90,
+        0x91CF35,
+        0x73BDC9,
+        0x5293D7,
+        0x2A7793,
+      ];
+
+      var SITE_MATERIAL = new THREE.MeshBasicMaterial({color: 0xffffff});
+      var MINE_MATERIAL = new THREE.MeshBasicMaterial({color: 0xff0000});
+
+      var SITE = new THREE.Mesh(new THREE.SphereGeometry(0.07, 4, 4), SITE_MATERIAL);
+      var MINE = new THREE.Mesh(new THREE.SphereGeometry(0.12, 4, 4), MINE_MATERIAL);
+
+      var RIVER_DEFAULT_MATERIAL = new THREE.MeshBasicMaterial({color: 0x2C3E59});
+      var RIVER_MATERIALS = [];
+
+      var wnh = getRenderSize();
+      var WIDTH = wnh[0];
+      var HEIGHT = wnh[1];
+      var ASPECT = WIDTH / HEIGHT;
+
+      for (i in PLAYER_COLORS) {
+        RIVER_MATERIALS.push(
+          new THREE.MeshBasicMaterial({color: PLAYER_COLORS[i]})
+        )
+      }
+
+      init();
+      animate();
+
+      function getRenderContainer() {
+        return document.getElementById('container');
+      }
+
+      function getRenderSize() {
+        var container = getRenderContainer();
+        return [container.clientWidth, container.clientHeight];
+      }
+
+      function init() {
+        camera = new THREE.PerspectiveCamera(CAMERA_FOV, ASPECT, 0.01, 250 );
+        camera.position.x = 0;
+        camera.position.y = 0;
+        camera.position.z = CAMERA_ZOOM * CAMERA_FOV;
+        camera.lookAt(new THREE.Vector3(0,0,0));
+
+        scene = new THREE.Scene();
+
+        scene.fog = new THREE.Fog( 0x111111, 150, 200 );
+
+        root = new THREE.Object3D();
+
+        renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setClearColor( 0x111111 );
+        renderer.setPixelRatio( window.devicePixelRatio );
+
+        onWindowResize();
+
+        var container = getRenderContainer();
+        container.appendChild( renderer.domElement );
+
+        drawMap(GAME_MAP);
+
+        container.addEventListener('resize', onWindowResize, false);
+        container.addEventListener('mousedown', onMouseDown, false);
+        window.addEventListener('mouseup', onMouseUp, false);
+        window.addEventListener('mousemove', onMouseMove, false);
+        container.addEventListener('wheel', onScroll, false);
+      }
+
+      function site(id, x, y) {
+        var _site = SITE.clone();
+        scene.add(_site);
+        _site.position.set(x, y, 0);
+        sites[id] = _site;
+        return _site;
+      }
+
+      function mine(id, x, y) {
+        var _mine = MINE.clone();
+        scene.add(_mine);
+        _mine.position.set(x, y, 0);
+        mines[id] = _mine;
+        return mine;
+      }
+
+      function river(id, from_site, to_site, occupied_by) {
+        var material = RIVER_MATERIALS[occupied_by] || RIVER_DEFAULT_MATERIAL;
+        var geometry = new THREE.Geometry();
+        geometry.vertices.push(
+          new THREE.Vector3(0,-0.015,0),
+          new THREE.Vector3(0,0.015,0),
+          new THREE.Vector3(1,-0.015,0),
+          new THREE.Vector3(1,0.015,0)
+        );
+        geometry.faces.push(
+          new THREE.Face3(0,2,1),
+          new THREE.Face3(1,2,3)
+        );
+
+        var vec = new THREE.Vector3().subVectors(
+          to_site.position,
+          from_site.position
+        );
+        var angleXY = new THREE.Vector3(1,0,0).angleTo(vec);
+        if (to_site.position.y < from_site.position.y) {
+          angleXY = -angleXY;
+        }
+
+        var _river = new THREE.Mesh(geometry, material);
+        scene.add(_river);
+        _river.position.copy(from_site.position);
+        _river.scale.x = vec.length();
+        _river.rotateZ(angleXY);
+        rivers[id] = _river;
+        return _river;
+      }
+
+      function drawMap(map) {
+        // draw sites
+        for (i in map.sites) {
+          var id = map.sites[i].id,
+              x  = map.sites[i].x,
+              y  = map.sites[i].y;
+          site(id, x, y);
+        }
+
+        // draw mines
+        for (i in map.mines) {
+          var id = map.mines[i];
+          mine(id, sites[id].position.x, sites[id].position.y);
+        }
+
+        // draw rivers
+        for (i in map.rivers) {
+          var _river = map.rivers[i];
+          var source_id = Math.min(_river.source, _river.target);
+          var target_id = Math.max(_river.source, _river.target);
+          var source = sites[source_id],
+              target = sites[target_id];
+
+          river(source_id + "-" + target_id, source, target);
+        }
+      }
+
+      function clearRivers() {
+        for (i in rivers) {
+          var _river = rivers[i];
+
+          _river.material = RIVER_DEFAULT_MATERIAL;
+        }
+      }
+
+      function updateRivers(current_owners) {
+        for (i in rivers) {
+          var _river = rivers[i];
+          var owner = current_owners[i];
+          var _material = RIVER_MATERIALS[current_owners[i]] || RIVER_DEFAULT_MATERIAL;
+
+          _river.material = _material;
+        }
+      }
+
+      function goToMove(moveNumber) {
+        clearRivers();
+        var moves = MOVES.slice(0, moveNumber);
+        var result = moves.reduce(function (acc, move) {
+          if (!move.claim) {
+            return acc;
+          }
+          var claim = move.claim;
+          var owner = claim.punter;
+          var sourceSite = Math.min(claim.source, claim.target);
+          var targetSite = Math.max(claim.source, claim.target);
+          acc[sourceSite + '-' + targetSite] = owner;
+          return acc
+        }, {});
+        updateRivers(result);
+        CURRENT_MOVE.innerText = moveNumber;
+      }
+
+      function removeAllGameObjects() {
+        for (i in sites) {
+          scene.remove(sites[i]);
+          delete sites[i];
+        }
+        sites = {};
+
+        for (i in mines) {
+          scene.remove(mines[i]);
+          delete mines[i];
+        }
+        mines = {};
+
+        for (i in rivers) {
+          scene.remove(rivers[i]);
+          delete rivers[i];
+        }
+        rivers = {};
+      }
+
+      function onWindowResize() {
+        var container = getRenderContainer();
+        var width = container.clientWidth,
+            height = container.clientHeight;
+
+        WIDTH = width;
+        HEIGHT = height;
+        ASPECT = width / height;
+
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(width, height);
+      }
+
+      function onMouseDown(ev) {
+        CAMERA_CONTROL_ACTIVE = true;
+      }
+
+      function onMouseMove(ev) {
+        if (!CAMERA_CONTROL_ACTIVE) {
+          return;
+        }
+
+        var dx = -ev.movementX * CAMERA_ZOOM * CAMERA_CONTROL_SENSITIVITY;
+        var dy = ev.movementY * CAMERA_ZOOM * CAMERA_CONTROL_SENSITIVITY;
+
+        camera.position.x += dx;
+        camera.position.y += dy;
+      }
+
+      function onScroll(ev) {
+        if (CAMERA_CONTROL_ACTIVE) {
+          return;
+        }
+
+        var dz = ev.deltaY * CAMERA_ZOOM_SENSITIVITY;
+        var dx = dz * (ev.offsetX / ev.target.clientWidth * 2 - 1);
+        var dy = dz * -(ev.offsetY / ev.target.clientHeight * 2 - 1) / ASPECT;
+
+        applyPerspectiveZoom(dx, dy, dz);
+      }
+
+      function applyPerspectiveZoom(dx, dy, dz) {
+        CAMERA_ZOOM = CAMERA_ZOOM * (1 + dz);
+
+        camera.position.z = CAMERA_ZOOM * CAMERA_FOV;
+        camera.position.x -= dx * 7.85 * CAMERA_ZOOM;
+        camera.position.y -= dy * 7.85 * CAMERA_ZOOM;
+      }
+
+      function onMouseUp() {
+        CAMERA_CONTROL_ACTIVE = false;
+      }
+
+      function animate() {
+        requestAnimationFrame(animate);
+        render();
+      }
+
+      function render() {
+        var time = Date.now() * 0.001;
+        renderer.render(scene, camera);
+      }
+  </script>
+</body>
+</html>
