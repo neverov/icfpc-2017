@@ -48,8 +48,8 @@ end
 
 class Matrix
   def initialize(punters)
-    @adj     = Hash.new { Set.new }
-    @claims  = Hash.new { {} }
+    @adj     = Hash.new {|h,k| h[k] = Set.new }
+    @claims  = Hash.new {|h,k| h[k] = {} }
     @punters = Array.new(punters) { [] }
     @allowed = Array.new(punters) { Set.new  }
   end
@@ -117,8 +117,6 @@ class Game
   end
 
   def finished?
-    p @occupied
-    p @edges_count
     @occupied == @edges_count
   end
 
