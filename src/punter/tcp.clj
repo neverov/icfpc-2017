@@ -1,6 +1,6 @@
 (ns punter.tcp
   (:gen-class)
-  (:require [clojure.tools.namespace.repl :refer [refresh]]) 
+  (:require [clojure.tools.namespace.repl :refer [refresh]])
   (:import (java.net Socket)
            (java.io PrintWriter InputStreamReader BufferedReader)))
 
@@ -9,12 +9,9 @@
 
 (defn in [socket]
   (BufferedReader. (InputStreamReader. (.getInputStream socket))))
-  
-(defn out [socket] 
-  (PrintWriter. (.getOutputStream socket)))
 
-(defn ->msg [msg]
-  (str (count msg) ":" msg))
+(defn out [socket]
+  (PrintWriter. (.getOutputStream socket)))
 
 (defn print-handler [conn]
   (while (nil? (:exit conn))
@@ -29,9 +26,8 @@
     (doto (Thread. #(handler conn)) (.start))
     conn))
 
-(defn write [conn msg]
-  (let [message (->msg msg)]
-    (println "sending message:" message)
-    (doto (:out conn)
-      (.println message)
-      (.flush))))
+(defn write [conn message]
+  (println "sending message:" message)
+  (doto (:out conn)
+    (.println message)
+    (.flush)))
