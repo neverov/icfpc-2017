@@ -4,6 +4,7 @@ require 'json'
 require 'scanf'
 require 'set'
 require 'socket'
+require 'pqueue'
 
 trap("SIGINT") { exit!(0) }
 
@@ -46,6 +47,53 @@ if options[:users] < 2 || options[:users] > 10
   exit(1)
 end
 
+
+class Graph
+  INF = 1e9
+
+  def initialize(size)
+    @size = size
+    @vertices = Set.new
+    @edges = Array.new(size) { Set.new }
+  end
+
+  def add_edge(from ,to)
+    @edges[from] << to
+    @edges[to] << from
+    @vertices << to
+    @vertices << from
+  end
+
+  def score(point)
+    if @vertices.include?(point)
+      dijkstra(point).map {|e| e*e }.reduce(:+)
+    else
+      0
+    end
+  end
+
+private
+  def dijkstra(u)
+    d = Array.new(size) { INF }
+
+    d[u] = 0
+    pq = PQueue.new { |(a,_),(b, _)| a < b }
+    pq.push([0, u])
+    while !pq.empty?
+      v, cur_d = pq.pop
+      next if cur_d > d[v]
+
+      edges[v].each do |to|
+        if d[v] + 1 < d[to]
+          d[to] = d[v] + 1
+          q.push([d[to], to])
+        end
+      end
+    end
+    d.reject {|e| e == INF }
+  end
+end
+
 class Matrix
   def initialize(punters)
     @adj     = Hash.new {|h,k| h[k] = Set.new }
@@ -78,7 +126,7 @@ class Matrix
   end
 
   def edges_count
-    @adj.keys.size
+    @edges_count ||= @adj.keys.size
   end
 
   def mines(mines)
@@ -86,7 +134,18 @@ class Matrix
   end
 
   def score_for(punter)
-    0
+    graph = Graph.new(edges_count)
+    score = 0
+
+    @allowed[punter].each do |(from ,to)|
+      graph.add_edge(from, to)
+    end
+
+    @mines.each do |mine|
+      score += graph.score(mine)
+    end
+
+    score
   end
 end
 
@@ -122,6 +181,10 @@ class Game
 
   def scores(punters)
     @scores ||= calc_scores(punters)
+  end
+
+  def finish!
+    @occupied = @edges_count
   end
 
 private
@@ -211,6 +274,10 @@ private
     msg = client.read(len.to_i)
     p msg
     JSON.parse(msg)
+  rescue Exception => e
+    p e
+    clear
+    game.finish!
   end
 
   def write(client, msg)
