@@ -9,6 +9,43 @@
   (when (< (rand) chance)
     item))
 
+(defn ->game-state
+  "transforms initial game state to a shiny sweet narrow form"
+  [state]
+  (let [{punter :punter punters :punters game-map :map} state
+        {:keys [sites mines rivers]} game-map
+        punters (range punters)
+        sites (map :id sites)
+        rivers (map (fn [{:keys [source target] :as river}]
+                      [(min source target) (max source target)])
+                    rivers)
+        dist-maps (distance-maps sites rivers mines)]
+    {:punter punter
+     :punters punters
+     :sites sites
+     :mines mines
+     :rivers rivers
+     :distance-maps dist-maps}))
+
+(defn apply-move
+  "applies a list of moves to game state"
+  [state move]
+  (let [moves (->> move :move :moves
+                   (remove :pass)
+                   (map :claim))
+        rivers (:rivers state)
+        updated-rivers (reduce
+                         (fn [rivers claim]
+                           (let [{:keys [source target punter]} claim
+                                 rivers (vec rivers)
+                                 river [(min source target) (max source target)]
+                                 claimed-river (conj river punter)]
+                             (-> (remove #(= % river) rivers)
+                                 (conj claimed-river))))
+                         rivers
+                         moves)]
+    (assoc state :rivers updated-rivers)))
+
 (defn adjacent-sites
   "given a set of sites and rivers
   returns a set of sites, that are adjacent to given ones, but not contained in them.

@@ -1,6 +1,6 @@
 (ns punter.core
   (:gen-class)
-  (:require [clojure.tools.namespace.repl :refer [refresh]] 
+  (:require [clojure.tools.namespace.repl :refer [refresh]]
             [punter.strategies.random :as strategy]
             [punter.api :as api]
             [punter.tcp :as tcp]
@@ -30,17 +30,18 @@
     state))
 
 (defn play [port]
-  (log "connecting:" (str host ":" port))  
+  (log "connecting:" (str host ":" port))
   (let [conn (tcp/connect host port)
-        state (handshake conn)
-        punter (:punter state)
-        move (atom (api/recv-msg conn))
-        _ (api/pass conn (:punter state))
-        _ (log @move)]
+        initial-state (handshake conn)
+        game-state (atom (utils/->game-state initial-state))
+        punter (:punter @game-state)
+        move (atom (api/recv-msg conn))]
     (while (not (stop? @move))
-      (reset! move (api/recv-msg conn))
-      (log "received move:" @move) 
-      (let [next-move (strategy/move state)]
-        (api/send-msg conn next-move)))
+      (log "received move:" @move)
+      (swap! game-state utils/apply-move @move)
+      (let [next-move (strategy/move @game-state)]
+        (api/send-msg conn next-move))
+      (reset! move (api/recv-msg conn)))
+    (log "received stop:" @move)
     (log "player" punter ", game finished, scores:" (:scores (:stop @move)))
     conn))
