@@ -206,7 +206,7 @@
       var SITE_MATERIAL = new THREE.MeshBasicMaterial({color: 0xffffff});
       var MINE_MATERIAL = new THREE.MeshBasicMaterial({color: 0xff0000});
 
-      var SITE = new THREE.Mesh(new THREE.SphereGeometry(0.07, 4, 4), SITE_MATERIAL);
+      var SITE = new THREE.Mesh(new THREE.SphereGeometry(0.05, 4, 4), SITE_MATERIAL);
       var MINE = new THREE.Mesh(new THREE.SphereGeometry(0.12, 4, 4), MINE_MATERIAL);
 
       var RIVER_DEFAULT_MATERIAL = new THREE.MeshBasicMaterial({color: 0x2C3E59});
@@ -315,11 +315,31 @@
       }
 
       function drawMap(map) {
+        var min_x = map.sites[0].x,
+            max_x = map.sites[0].x,
+            min_y = map.sites[0].y,
+            max_y = map.sites[0].y;
+
+        map.sites.forEach(function (site) {
+          if (site.x < min_x) {
+            min_x = site.x;
+          } else if (site.x > max_x) {
+            max_x = site.x;
+          }
+          if (site.y < min_y) {
+            min_y = site.y;
+          } else if (site.y > max_y) {
+            max_y = site.y;
+          }
+        });
+        var max_dx = max_x - min_x;
+        var max_dy = max_y - min_y;
+
         // draw sites
         for (i in map.sites) {
           var id = map.sites[i].id,
-              x  = map.sites[i].x,
-              y  = map.sites[i].y;
+              x  = ((map.sites[i].x - min_x) / max_dx - 0.5) * 0.4 * CAMERA_FOV,
+              y  = ((map.sites[i].y - min_y) / max_dy - 0.5) * 0.4 * CAMERA_FOV;
           site(id, x, y);
         }
 
