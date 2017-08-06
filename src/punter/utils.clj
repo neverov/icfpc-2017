@@ -9,6 +9,13 @@
   (when (< (rand) chance)
     item))
 
+(defn ->fixed-river
+  [river]
+  (let [{:keys [source target]} river]
+    (if (> source target)
+      (assoc river :source target :target source)
+      river)))
+
 (defn ->game-state
   "transforms initial game state to a shiny sweet narrow form"
   [state]
