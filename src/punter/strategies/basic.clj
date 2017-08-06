@@ -1,4 +1,5 @@
 (ns punter.strategies.basic
+  (require [punter.graph :as graph])
   (:import (punter.strategies.core StrategyProto)))
 
 (defn- format
@@ -8,17 +9,14 @@
 
 (defn init*
   "Initializes strategy and returns it"
-  [{:keys [punter punters map]}])
+  [{:keys [punter punters map] :as game}]
+  {:last-step 0 :my-moves 0 :punter punter :graph (graph/build game)})
 
 (defn move*
   "Basic strategy"
   [{:keys [punter] :as <strategy>} moves]
   ; TODO
   (format <strategy> source target))
-  ;(let [{:keys [punter punters sites mines rivers]} game-state
-  ;      vacant-rivers (filter #(nil? (get % 2)) rivers)
-  ;      target-river (take 2 (rand-nth vacant-rivers))]
-  ;  {:claim {:punter punter :source (first target-river) :target (last target-river)}}))
 
 (defrecord BasicStrategy []
   StrategyProto
