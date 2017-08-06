@@ -22,8 +22,16 @@
 
 (defn choose-best-first-move
   "Selects first move for given state"
-  [<strategy>])
-  ; TODO
+  [{{:keys [mines] :as graph} :graph :as <strategy>}]
+  (let [distances (->> (map #(hash-map :mine % :edges :distance 0) mines)
+                       (remove #(= 0 (graph/free-degree graph (:mine %))))
+                       (map #([(:mine %) %]))
+                       (into {}))]
+    (loop [[mine & rest] mines
+           distances     distances]
+      (if mine
+        (recur rest (assoc-in distances [mine :distance] (reduce + (map #(-> graph :distances mine %) mines))))
+        (let [mine (:mine (min-key :distance (vals distances)))])))))
 
 (def choose-best-move
   "Selects next move for given state"
@@ -34,12 +42,12 @@
   "Syncs state with moves made by enemies"
   [{:keys [handled-moves] :as <strategy>} moves]
   (loop [[{{:keys [source target]} :claim pass :pass} & rest] (drop handled-moves moves)
-         strategy                                  <strategy>]
+         strategy                                             <strategy>]
     (if pass
       (recur rest strategy)
       (if source
         (recur rest (update strategy :graph #(graph/mark-as-busy % source target)))
-        strategy))))
+        (assoc strategy :handled-moves moves)))))
 
 (defn move*
   "Basic strategy"
@@ -58,4 +66,3 @@
     (move* <strategy> moves)))
 
 (defn ->make [] (->BasicStrategy))
-
