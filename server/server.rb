@@ -50,37 +50,54 @@ end
 
 class Graph
   INF = 1e9
+  attr_reader :edges, :vertices
 
-  def initialize(size)
-    @size = size
+  def initialize
+    @edges = Hash.new { |h,k| h[k] = Set.new }
+    @scores = {}
     @vertices = Set.new
-    @edges = Array.new(size) { Set.new }
   end
 
   def add_edge(from ,to)
     @edges[from] << to
     @edges[to] << from
-    @vertices << to
     @vertices << from
+    @vertices << to
+    nil
   end
 
-  def score(point)
-    if @vertices.include?(point)
-      dijkstra(point).map {|e| e*e }.reduce(:+)
+  def has_edge?(from, to)
+    @edges[from].include?(to)
+  end
+
+  def adjacents(u)
+    @edges[u]
+  end
+
+  def score(mine, points)
+    score = 0
+
+    if points.include?(point)
+      points.map { |point| scores(mine)[point]**2 }.reduce(:+)
     else
       0
     end
   end
 
+  def scores(mine)
+    @scores[mine] ||= dijkstra(mine)
+  end
+
 private
   def dijkstra(u)
-    d = Array.new(size) { INF }
-
+    d = Hash.new { |h,k| h[k] = INF }
     d[u] = 0
+
     pq = PQueue.new { |(a,_),(b, _)| a < b }
     pq.push([0, u])
+
     while !pq.empty?
-      v, cur_d = pq.pop
+      cur_d, v  = pq.pop
       next if cur_d > d[v]
 
       edges[v].each do |to|
@@ -90,6 +107,7 @@ private
         end
       end
     end
+
     d.reject {|e| e == INF }
   end
 end
@@ -98,16 +116,13 @@ class Matrix
   def initialize(punters)
     @adj     = Hash.new {|h,k| h[k] = Set.new }
     @claims  = Hash.new {|h,k| h[k] = {} }
-    @punters = Array.new(punters) { [] }
+    @punter_vertices = Array.new(punters) { Set.new }
     @allowed = Array.new(punters) { Set.new  }
+    @graph = Graph.new
   end
 
   def add_edge(from, to)
-    if from < to
-      @adj[from] << to
-    else
-      @adj[to] << from
-    end
+    @graph.add_edge(from, to)
   end
 
   def claim(source, target, punter)
@@ -115,12 +130,15 @@ class Matrix
       source, target = target, source
     end
 
-    if @adj[source][target] &&      # adj exists
-       !@claims[source][target] &&  # adj is free
+    if graph.has_edge?(source, target) &&      # adj exists
+       !@claims[source][target] &&              # adj is free
        (@allowed[punter].empty? || @allowed[punter].include?(source) || @allowed[punter].include?(target)) # punter's net includes source or target
+
       @claims[source][target] = punter
-      @punters[punter] << [source, target]
-      @allowed[punter] = @allowed[punter] | @adj[source] | @adj[target]
+      @punter_vertices[punter] << source
+      @punter_vertices[punter] << target
+      @allowed[punter] = @allowed[punter] | graph.adjacents(source) | graph.adjacents(target)
+
       true
     end
   end
@@ -134,15 +152,10 @@ class Matrix
   end
 
   def score_for(punter)
-    graph = Graph.new(edges_count)
     score = 0
 
-    @allowed[punter].each do |(from ,to)|
-      graph.add_edge(from, to)
-    end
-
     @mines.each do |mine|
-      score += graph.score(mine)
+      score += graph.score(mine, @punter_vertices[punter])
     end
 
     score

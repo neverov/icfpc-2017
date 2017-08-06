@@ -1,8 +1,9 @@
 require 'json'
 require 'socket'
 require 'scanf'
+require './strategies/kronos'
 
-greeting = {me: Time.now.to_i.to_s}.to_json #{}"Lambda Riot"}.to_json
+greeting = {me: "Lambda Riot Kr"}.to_json
 
 # URL = "punter.inf.ed.ac.uk"
 # PORT = 9005
@@ -10,19 +11,15 @@ greeting = {me: Time.now.to_i.to_s}.to_json #{}"Lambda Riot"}.to_json
 URL = "localhost"
 PORT = 8080
 
-def parse_state(json)
-  JSON.parse(json)
-
-end
-
 class Game
   NAME = "Lambda Riot"
 
   attr_reader :server, :punter, :punters
 
-  def initialize(server)
+  def initialize(server, strategy_class)
     @server = server
     @name = Time.now.to_i.to_s
+    @strategy_class = strategy_class
   end
 
   def run
@@ -30,14 +27,14 @@ class Game
     server.ssend(me: @name)
     msg = server.read
     raise msg.inspect if msg["you"] != @name
-    #p msg
+
     loop do
       msg = server.read
-      #p msg
+
       if msg["map"]
         parse_state(msg)
       elsif msg["move"]
-        move(msg)
+        @server.ssend(@strategy.move(msg["move"]["moves"]))
       elsif msg["stop"]
         r = result(msg)
         break
@@ -53,14 +50,15 @@ class Game
 
   def parse_state(msg)
     @punter = msg["punter"]
+    @strategy = @strategy_class.new(msg)
     @punters = msg["punters"]
     @map = msg["map"]
     server.ssend(ready: punter)
   end
 
-  def move(msg)
-    @server.ssend(pass: {punter: punter})
-  end
+  # def pass(msg)
+  #   @server.ssend(pass: {punter: punter})
+  # end
 
   def result(msg)
     msg["stop"]["scores"].detect {|e| e["punter"] == punter}["score"]
@@ -92,6 +90,6 @@ class Server
   end
 end
 
-    server = Server.new(URL, PORT)
-    game = Game.new(server)
-    game.run
+server = Server.new(URL, PORT)
+game = Game.new(server, KronosStrategy)
+puts game.run
