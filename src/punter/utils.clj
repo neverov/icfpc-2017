@@ -74,7 +74,7 @@
   {1 1, 2 0, 3 2, 4 1, 5 2, 6 nil]}
   "
   [sites rivers start-node]
-  (let [distances (apply assoc {} (interleave sites (repeat (count sites) nil)))
+  (let [distances (apply assoc {} (interleave sites (repeat nil)))
         distances (assoc distances start-node 0)]
     (loop [cost 1
            distances distances
@@ -82,7 +82,7 @@
       (let [adjs (adjacent-sites covered-sites rivers)]
         (if (not-empty adjs)
           (recur (+ 1 cost)
-                 (apply assoc distances (interleave adjs (repeat (count adjs) cost)))
+                 (apply assoc distances (interleave adjs (repeat cost)))
                  (set/union covered-sites adjs))
           distances)))))
 
