@@ -28,8 +28,8 @@
 (defn ready [conn punter]
   (send-msg conn {:ready punter}))
 
-(defn move [conn punter source target]
-  (send-msg conn {:claim {:punter punter :source source :target target}}))
+(defn move [conn move]
+  (send-msg conn move))
 
 (defn pass [conn punter]
   (send-msg conn {:pass {:punter punter}}))

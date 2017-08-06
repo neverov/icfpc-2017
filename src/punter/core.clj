@@ -4,7 +4,8 @@
             [punter.strategies.random :as strategy]
             [punter.api :as api]
             [punter.tcp :as tcp]
-            [punter.util :refer [log]]))
+            [punter.util :refer [log]]
+            [punter.utils :as utils]))
 
 (def host "punter.inf.ed.ac.uk")
 (def username "Lambda Riot")
@@ -39,8 +40,12 @@
     (while (not (stop? @move))
       (log "received move:" @move)
       (swap! game-state utils/apply-move @move)
-      (let [next-move (strategy/move @game-state)]
-        (api/send-msg conn next-move))
+      (try
+        (let [move (strategy/move @game-state)]
+          (api/move conn move))
+        (catch Exception e
+          (log e)
+          (api/pass conn punter)))
       (reset! move (api/recv-msg conn)))
     (log "received stop:" @move)
     (log "player" punter ", game finished, scores:" (:scores (:stop @move)))
