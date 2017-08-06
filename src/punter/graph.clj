@@ -15,13 +15,14 @@
 (defn- handle-vertex
   [pq graph distances v]
   (loop [pq pq
-         to (adjacents graph v)]
+         distances distances
+         [to & rest] (adjacents graph v)]
     (if to
       (let [old-distance (get distances to inf)
             new-distance (inc (get distances v))]
         (if (> old-distance new-distance)
-          (recur (assoc pq to new-distance) (assoc distances to new-distance))
-          (recur pq distances)))
+          (recur (assoc pq to new-distance) (assoc distances to new-distance) rest)
+          (recur pq distances rest)))
       {:pq pq :distances distances})))
 
 (defn- add-mine
@@ -40,18 +41,18 @@
 
 (defn- add-rivers
   [<graph> rivers]
-  (loop [{:keys [source target]} rivers
-         graph                   <graph>]
+  (loop [[{:keys [source target]} & rest] rivers
+         graph                            <graph>]
     (if source
-      (recur (rest rivers) (add-edge graph source target))
+      (recur rest (add-edge graph source target))
       graph)))
 
 (defn- add-mines
   [<graph> mines]
-  (loop [mine  mines
-         graph <graph>]
+  (loop [[mine & rest] mines
+         graph         <graph>]
     (if mine
-      (recur (rest mines) (add-mine graph mine))
+      (recur mines (add-mine graph mine))
       graph))) 
 
 (defn build
@@ -80,7 +81,7 @@
 
 (defn claim
   "Claims an edge. Returns updated graph"
-  [<graph> source target]
+  [<graph> {:keys [source target]}]
   (-> <graph>
       (mark-as-busy source target)
       (update :allowed #(set/union %
@@ -91,4 +92,3 @@
   "Checks whether edge is busy"
   [{:keys [busy]} source target]
   (some-> busy source (contains? target)))
-
