@@ -1,7 +1,8 @@
 (ns punter.utils
   (:gen-class)
   (:require [clojure.tools.namespace.repl :refer [refresh]]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [punter.moves :as moves]))
 
 (defn chance
   "returns the item with a given chance, otherwise nil"
@@ -38,8 +39,13 @@
   "applies a list of moves to game state"
   [state move]
   (let [moves (->> move :move :moves
-                   (remove :pass)
-                   (map :claim))
+                   (remove :pass))
+        splurges (filter :splurge moves)
+        claims (->> moves
+                    (filter :claim)
+                    (map moves/->fixed-claim))
+        effective-moves (->> (map moves/splurge->claims splurges)
+                             (reduce conj claims))
         rivers (:rivers state)
         updated-rivers (reduce
                          (fn [rivers claim]
