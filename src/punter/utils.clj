@@ -1,13 +1,63 @@
 (ns punter.utils
   (:gen-class)
   (:require [clojure.tools.namespace.repl :refer [refresh]]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [punter.moves :as moves]))
 
 (defn chance
   "returns the item with a given chance, otherwise nil"
   [chance item]
   (when (< (rand) chance)
     item))
+
+(defn ->fixed-river
+  [river]
+  (let [{:keys [source target]} river]
+    (if (> source target)
+      (assoc river :source target :target source)
+      river)))
+
+(defn ->game-state
+  "transforms initial game state to a shiny sweet narrow form"
+  [state]
+  (let [{punter :punter punters :punters game-map :map} state
+        {:keys [sites mines rivers]} game-map
+        punters (range punters)
+        sites (map :id sites)
+        rivers (map (fn [{:keys [source target] :as river}]
+                      [(min source target) (max source target)])
+                    rivers)
+        dist-maps (distance-maps sites rivers mines)]
+    {:punter punter
+     :punters punters
+     :sites sites
+     :mines mines
+     :rivers rivers
+     :distance-maps dist-maps}))
+
+(defn apply-move
+  "applies a list of moves to game state"
+  [state move]
+  (let [moves (->> move :move :moves
+                   (remove :pass))
+        splurges (filter :splurge moves)
+        claims (->> moves
+                    (filter :claim)
+                    (map moves/->fixed-claim))
+        effective-moves (->> (map moves/splurge->claims splurges)
+                             (reduce conj claims))
+        rivers (:rivers state)
+        updated-rivers (reduce
+                         (fn [rivers claim]
+                           (let [{:keys [source target punter]} claim
+                                 rivers (vec rivers)
+                                 river [(min source target) (max source target)]
+                                 claimed-river (conj river punter)]
+                             (-> (remove #(= % river) rivers)
+                                 (conj claimed-river))))
+                         rivers
+                         moves)]
+    (assoc state :rivers updated-rivers)))
 
 (defn adjacent-sites
   "given a set of sites and rivers
@@ -30,7 +80,7 @@
   {1 1, 2 0, 3 2, 4 1, 5 2, 6 nil]}
   "
   [sites rivers start-node]
-  (let [distances (apply assoc {} (interleave sites (repeat (count sites) nil)))
+  (let [distances (apply assoc {} (interleave sites (repeat nil)))
         distances (assoc distances start-node 0)]
     (loop [cost 1
            distances distances
@@ -38,7 +88,7 @@
       (let [adjs (adjacent-sites covered-sites rivers)]
         (if (not-empty adjs)
           (recur (+ 1 cost)
-                 (apply assoc distances (interleave adjs (repeat (count adjs) cost)))
+                 (apply assoc distances (interleave adjs (repeat cost)))
                  (set/union covered-sites adjs))
           distances)))))
 
