@@ -7,12 +7,12 @@
 
 (defn send-msg [conn payload]
   (let [body (generate-string payload)
-        length (inc (count body))
-        msg (str length ":" body "\n")]
+        length (count body)
+        msg (str length ":" body)]
     (tcp/write conn msg)))
 
 (defn recv-msg [conn]
-  (let [resp (tcp/read-msg conn)
+  (let [resp (tcp/read-json conn)
         ;payload (second (clojure.string/split resp #":" 2))
         msg (parse-string resp true)]
     msg))
