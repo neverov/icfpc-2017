@@ -79,39 +79,40 @@ class KronosStrategy
 
   def initialize(punter, initial_state)
     @punter = punter
-    @last_step = 0
+    @last_step = -1
     @my_move = 0
     @graph = PlayGraph.new(initial_state)
   end
 
   def move(moves)
-    moves = moves.reject { |move| move["pass"] }
+    # moves = moves.reject { |move| move["pass"] }
 
-    moves[(@last_step + 1)...moves.size].each do |move|
-      if move["punter"] != punter
-        graph.mark_as_busy(move["source"], move["target"])
-      end
-    end
+    # moves[(@last_step + 1)...moves.size].each do |move|
+    #   if move["punter"] != punter
+    #     graph.mark_as_busy(move["source"], move["target"])
+    #   end
+    # end
 
-    @last_step = moves.size
+    # @last_step = moves.size
 
-    if @my_move == 0
-      source, target = find_best_mine
-    else
-      source, target = occupy_nearby_mine
-      unless source
-        source, target = find_best_move
-      end
-    end
+    # if @my_move == 0
+    #   source, target = find_best_mine
+    # else
+    #   source, target = occupy_nearby_mine
+    #   unless source
+    #     source, target = find_best_move
+    #   end
+    # end
 
-    @my_move += 1
+    # @my_move += 1
 
-    if source.nil? || target.nil?
-      raise "Bad move: #{source} #{target}"
-    end
+    # if source.nil? || target.nil?
+    #   raise "Bad move: #{source} #{target}"
+    # end
 
-    graph.claim(source, target)
-    format_move(source, target)
+    # graph.claim(source, target)
+    # format_move(source, target)
+    {pass: {punter: punter}}
   end
 
 private

@@ -50,7 +50,7 @@ class Game
 
   def parse_state(msg)
     @punter = msg["punter"]
-    @strategy = @strategy_class.new(msg)
+    @strategy = @strategy_class.new(@punter, msg)
     @punters = msg["punters"]
     @map = msg["map"]
     server.ssend(ready: punter)
