@@ -11,21 +11,27 @@
 (def host "punter.inf.ed.ac.uk")
 (def username "Lambda Riot")
 
-(defn -main [& args]
+(defn play-offline [args]
   (log "starting Lambda Riot punter")
   (log "args:" args)
   (log "punter initialized")
-  (api/init nil username)
-  (let [{:keys [in out]} (tcp/connect *in* *out*)
-        you (.readLine in)
+  (let [conn (tcp/connect *in* *out*)
+        _ (log "connection established, sending init")
+        _ (api/init conn username)
+        _ (log "init sent for:" username)
+        you (api/recv-you conn)
+        _ (log "received you")
         _ (log you)
-        state (.readLine in) 
+        state (api/recv-state conn) 
         _ (log state)
-        _ (api/ready nil (:punter state))]
+        _ (api/ready conn (:punter state))]
     (while true 
-      (let [move (.readLine in)]
+      (let [move (api/recv-msg conn)]
         (log move)
         (api/pass nil 0)))))
+
+(defn -main [& args]
+  (play-offline args))
 
 (defn stop? [msg]
   (contains? msg :stop))
