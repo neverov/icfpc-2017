@@ -4,12 +4,17 @@
             [clojure.java.io :as io])
   (:import (java.net Socket)))
 
-(defn connect [host port]
-  (let [socket (Socket. host port)
-        in (io/reader (.getInputStream socket))
-        out (io/writer (.getOutputStream socket))]
-    (.setSoTimeout socket 10000) ; wait 10 sec for the game to start
+(defn connect [in-stream out-stream]
+  (let [in (io/reader in-stream)
+        out (io/writer out-stream)]
     {:in in :out out}))
+
+(defn connect-online [host port]
+  (let [socket (Socket. host port)
+        in (.getInputStream socket)
+        out (.getOutputStream socket)]
+    (.setSoTimeout socket 10000) ; wait 10 sec for the game to start
+    (connect in out)))        
 
 (defn write [conn msg]
   (println "sending message:" msg)

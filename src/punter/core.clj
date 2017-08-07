@@ -1,6 +1,7 @@
 (ns punter.core
   (:gen-class)
   (:require [clojure.tools.namespace.repl :refer [refresh]]
+            [clojure.java.io :as io]
             [punter.strategies.random :as strategy]
             [punter.api :as api]
             [punter.tcp :as tcp]
@@ -15,8 +16,16 @@
   (log "args:" args)
   (log "punter initialized")
   (api/init nil username)
-  (doseq [ln (line-seq (java.io.BufferedReader. *in*))]
-    (log ln)))
+  (let [{:keys [in out]} (tcp/connect *in* *out*)
+        you (.readLine in)
+        _ (log you)
+        state (.readLine in) 
+        _ (log state)
+        _ (api/ready nil (:punter state))]
+    (while true 
+      (let [move (.readLine in)]
+        (log move)
+        (api/pass nil 0)))))
 
 (defn stop? [msg]
   (contains? msg :stop))
@@ -32,7 +41,7 @@
 
 (defn play [port]
   (log "connecting:" (str host ":" port))
-  (let [conn (tcp/connect host port)
+  (let [conn (tcp/connect-online host port)
         initial-state (handshake conn)
         game-state (atom (utils/->game-state initial-state))
         punter (:punter @game-state)

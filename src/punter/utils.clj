@@ -4,6 +4,8 @@
             [clojure.set :as set]
             [punter.moves :as moves]))
 
+(declare distance-maps)
+
 (defn chance
   "returns the item with a given chance, otherwise nil"
   [chance item]
