@@ -2,6 +2,7 @@
   (:gen-class)
   (:require [clojure.tools.namespace.repl :refer [refresh]]
             [clojure.java.io :as io]
+            [clojure.data.json :as json]
             [punter.util :refer [log]])
   (:import (java.net Socket)))
 
@@ -49,5 +50,10 @@
         msg (read-symbols in length)]
     msg))
 
-(defn readln [conn]
-  (.readLine (:in conn)))
+(defn read-json
+  [conn]
+  ;; Throw away the length leader
+  (while (not= \: (char (.read (:in conn)))))
+  (let [val (json/read (:in conn))]
+    (log "read:" (pr-str val))
+    val))

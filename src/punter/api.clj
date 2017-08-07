@@ -25,8 +25,8 @@
 (defn recv-state [conn]
   (recv-msg conn))
 
-(defn ready [conn punter]
-  (send-msg conn {:ready punter}))
+(defn ready [conn data]
+  (send-msg conn data))
 
 (defn move [conn move]
   (send-msg conn move))

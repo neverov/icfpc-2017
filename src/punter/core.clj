@@ -2,11 +2,14 @@
   (:gen-class)
   (:require [clojure.tools.namespace.repl :refer [refresh]]
             [clojure.java.io :as io]
+            [clojure.data.json :as json]
             [punter.strategies.random :as strategy]
             [punter.api :as api]
             [punter.tcp :as tcp]
             [punter.util :refer [log]]
-            [punter.utils :as utils]))
+            [punter.utils :as utils]
+            [punter.strategies.basic :as basic]
+            [punter.strategies.core   :as core]))
 
 (def host "punter.inf.ed.ac.uk")
 (def username "Lambda Riot")
@@ -14,6 +17,7 @@
 (declare play-online)
 (declare play-offline)
 (declare play)
+(declare run-offline)
 
 (defn -main [& args]
   (log "starting Lambda Riot punter")
@@ -56,17 +60,14 @@
         initial-state (handshake conn)
         game-state (atom (utils/->game-state initial-state))
         punter (:punter @game-state)
-        move (atom (api/recv-msg conn))]
-    (while (not (stop? @move))
-      (log "received move:" @move)
-      (swap! game-state utils/apply-move @move)
-      (try
-        (let [move (strategy/move @game-state)]
-          (api/move conn move))
-        (catch Exception e
-          (log e)
-          (api/pass conn punter)))
-      (reset! move (api/recv-msg conn)))
-    (log "received stop:" @move)
-    (log "player" punter ", game finished, scores:" (:scores (:stop @move)))
-    conn))
+        ; move (atom (api/recv-msg conn))
+        strategy (-> (basic/->make) (core/init initial-state))
+        _ (api/ready conn {:punter punter :state strategy})
+        move (atom {})]
+    (loop [strategy strategy]
+      (reset! move (api/recv-msg conn))
+      (log @move)
+      (when-not (stop? @move)
+        (let [{:keys [state claim]} (basic/move* strategy (-> @move :move :moves))]
+          (api/move conn {:claim claim})
+          (recur state))))))

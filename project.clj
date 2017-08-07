@@ -6,7 +6,8 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [cheshire "5.7.1"]
                  [org.clojure/tools.namespace "0.2.11"]
-                 [org.clojure/data.priority-map "0.0.7"]]
+                 [org.clojure/data.priority-map "0.0.7"]
+                 [org.clojure/data.json "0.2.6"]]
   :main ^:skip-aot punter.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}}
