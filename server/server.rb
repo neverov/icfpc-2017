@@ -50,15 +50,17 @@ end
 
 class Graph
   INF = 1e9
-  attr_reader :edges, :vertices
+  attr_reader :edges, :vertices, :edges_count
 
   def initialize
     @edges = Hash.new { |h,k| h[k] = Set.new }
     @scores = {}
     @vertices = Set.new
+    @edges_count = 0
   end
 
   def add_edge(from ,to)
+    @edges_count += 1
     @edges[from] << to
     @edges[to] << from
     @vertices << from
@@ -77,7 +79,7 @@ class Graph
   def score(mine, points)
     score = 0
 
-    if points.include?(point)
+    if points.include?(mine)
       points.map { |point| scores(mine)[point]**2 }.reduce(:+)
     else
       0
@@ -114,7 +116,6 @@ end
 
 class Matrix
   def initialize(punters)
-    @adj     = Hash.new {|h,k| h[k] = Set.new }
     @claims  = Hash.new {|h,k| h[k] = {} }
     @punter_vertices = Array.new(punters) { Set.new }
     @allowed = Array.new(punters) { Set.new  }
@@ -144,7 +145,7 @@ class Matrix
   end
 
   def edges_count
-    @edges_count ||= @adj.keys.size
+    @edges_count ||= @graph.edges_count
   end
 
   def mines(mines)
@@ -155,7 +156,7 @@ class Matrix
     score = 0
 
     @mines.each do |mine|
-      score += graph.score(mine, @punter_vertices[punter])
+      score += @graph.score(mine, @punter_vertices[punter])
     end
 
     score
@@ -189,6 +190,8 @@ class Game
   end
 
   def finished?
+    p @occupied
+    p @edges_count
     @occupied == @edges_count
   end
 
@@ -258,7 +261,7 @@ class Server
       clients.each_with_index do |client, i|
         unless client.closed?
           break if game.finished?
-          write(client, move: game.moves)
+          write(client, move: {moves: game.moves})
           msg = read(client)
         end
       end
@@ -287,10 +290,10 @@ private
     msg = client.read(len.to_i)
     p msg
     JSON.parse(msg)
-  rescue Exception => e
-    p e
-    clear
-    game.finish!
+  # rescue Exception => e
+  #   p e
+  #   clear
+  #   game.finish!
   end
 
   def write(client, msg)
