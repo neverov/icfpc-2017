@@ -105,7 +105,7 @@ private
       edges[v].each do |to|
         if d[v] + 1 < d[to]
           d[to] = d[v] + 1
-          q.push([d[to], to])
+          pq.push([d[to], to])
         end
       end
     end
@@ -131,14 +131,14 @@ class Matrix
       source, target = target, source
     end
 
-    if graph.has_edge?(source, target) &&      # adj exists
+    if @graph.has_edge?(source, target) &&      # adj exists
        !@claims[source][target] &&              # adj is free
        (@allowed[punter].empty? || @allowed[punter].include?(source) || @allowed[punter].include?(target)) # punter's net includes source or target
 
       @claims[source][target] = punter
       @punter_vertices[punter] << source
       @punter_vertices[punter] << target
-      @allowed[punter] = @allowed[punter] | graph.adjacents(source) | graph.adjacents(target)
+      @allowed[punter] = @allowed[punter] | @graph.adjacents(source) | @graph.adjacents(target)
 
       true
     end
@@ -263,6 +263,7 @@ class Server
           break if game.finished?
           write(client, move: {moves: game.moves})
           msg = read(client)
+          game.move(msg)
         end
       end
     end
