@@ -12,8 +12,9 @@
     (tcp/write conn msg)))
 
 (defn recv-msg [conn]
-  (let [resp (tcp/read-json conn)
+  (let [resp (tcp/read-msg conn)
         ;payload (second (clojure.string/split resp #":" 2))
+        ; _ (clojure.pprint/pprint resp)
         msg (parse-string resp true)]
     msg))
 
@@ -26,8 +27,8 @@
 (defn recv-state [conn]
   (recv-msg conn))
 
-(defn ready [conn punter]
-  (send-msg conn {:ready punter}))
+(defn ready [conn data]
+  (send-msg conn data))
 
 (defn move [conn move]
   (send-msg conn move))

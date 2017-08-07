@@ -5,11 +5,11 @@ require './strategies/kronos'
 
 greeting = {me: "Lambda Riot Kr"}.to_json
 
-# URL = "punter.inf.ed.ac.uk"
-# PORT = 9005
+URL = "punter.inf.ed.ac.uk"
+PORT = 9023
 
-URL = "localhost"
-PORT = 8080
+# URL = "localhost"
+# PORT = 8080
 
 class Game
   NAME = "Lambda Riot"
