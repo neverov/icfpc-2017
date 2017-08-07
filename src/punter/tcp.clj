@@ -26,10 +26,11 @@
 (defn- read-until
   [input-stream stop-symbol]
   (loop [string ""]
-    (let [c (-> input-stream .read char)]
-      (if (= c stop-symbol)
-        string
-        (recur (str string c))))))
+    (let [c (-> input-stream .read)]
+      (cond
+        (= c -1) (recur string)
+        (= (char c) stop-symbol) string
+        :else (recur (str string (char c)))))))
 
 (defn- read-symbols
   [input-stream amount]
@@ -46,7 +47,6 @@
         length (-> (read-until in \:)
                    read-string)
         msg (read-symbols in length)]
-    (log "tcp/read-msg:" msg)
     msg))
 
 (defn readln [conn]

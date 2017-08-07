@@ -17,31 +17,43 @@
 
 (defn -main [& args]
   (log "starting Lambda Riot punter")
-  (play-offline))  
+  (play-offline))
 
 (defn stop? [msg]
   (contains? msg :stop))
 
 (defn handshake [conn]
-  (let [_ (log "sending init")
-        _ (api/init conn username)
+  (let [_ (api/init conn username)
         you (api/recv-you conn)
         _ (log "received you:" you)
-        state (api/recv-state conn)
-        _ (log "received initial game state:" state)
-        _ (api/ready conn (:punter state))]
-    state))
+        msg (api/recv-msg conn)
+        _ (log "received message:" msg)]
+    msg))
 
 (defn play-offline []
   (log "connecting offline")
-  (play (tcp/connect *in* *out*)))
+  (let [conn (tcp/connect *in* *out*)
+        msg (handshake conn)
+        punter (:punter msg)
+        move (:move msg)
+        stop (:stop msg)
+        state (:state msg)]
+    (cond
+      punter
+      (api/send-msg conn {:ready punter
+                          :state (utils/->game-state msg)})
+      move
+      (api/send-msg conn (strategy/move state))
+      stop
+      (do
+        (log "received stop")
+        (log "player" (:punter state) ", game finished, scores:" (:scores stop)))
+      :else (log "unrecognized server message:" msg))))
 
 (defn play-online [port]
   (log "connecting:" (str host ":" port))
-  (play (tcp/connect-online host port)))
-
-(defn play [conn]
-  (let [initial-state (handshake conn)
+  (let [conn (tcp/connect-online host port)
+        initial-state (handshake conn)
         game-state (atom (utils/->game-state initial-state))
         punter (:punter @game-state)
         move (atom (api/recv-msg conn))]
