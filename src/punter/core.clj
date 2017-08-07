@@ -59,20 +59,38 @@
 ;        (recur state)))))
 
 (defn play [conn]
-  (let [initial-state (handshake conn)
-        game-state (atom (utils/->game-state initial-state))
-        punter (:punter @game-state)
-        ; move (atom (api/recv-msg conn))
-        strategy (-> (basic/->make) (core/init initial-state))
-        _ (api/ready conn {:punter punter :state strategy})
-        move (atom {})]
-    (loop [strategy strategy]
-      (reset! move (api/recv-msg conn))
-      (log @move)
-      (when-not (stop? @move)
-        (let [{:keys [state claim]} (basic/move* strategy (-> @move :move :moves))]
-          (api/move conn {:claim claim})
-          (recur state))))))
+  (let [initial-state (handshake conn)]
+    (log "-----")
+    (log initial-state)
+    (log "-----")
+    (if (nil? (:map initial-state))
+      (do
+        (log "HERE")
+        (let [strategy (basic/import (:state initial-state))
+              move  (basic/move* strategy (:move initial-state))]
+          (api/move conn move)))
+      (let [state (-> (basic/->make) (core/init initial-state))]
+        (api/ready conn {:ready (:punter state) :state state})))))
+;        _ (log "++++++++++")
+;        _ (log initial-state)
+;        _ (log "++++++++++")
+;        game-state (atom (utils/->game-state initial-state))
+;        punter (:punter @game-state)
+;        ; move (atom (api/recv-msg conn))
+;        strategy (if (:state initial-state)
+;
+;                   (-> (basic/->make) (core/init initial-state)))
+;        _ (api/ready conn {:ready punter :state strategy})]))
+;;        move (atom {})]))
+    ;(loop [strategy strategy]
+    ;  (reset! move (api/recv-msg conn))
+    ;  (log "========")
+    ;  (log @move)
+    ;  (log "========")
+    ;  (when-not (stop? @move)
+    ;    (let [{:keys [state claim]} (basic/move* strategy (-> @move :move :moves))]
+    ;      (api/move conn {:claim claim})
+    ;      (recur state))))))
     ;(while (not (stop? @move))
     ;  (log "received move:" @move)
     ;  (swap! game-state utils/apply-move @move)

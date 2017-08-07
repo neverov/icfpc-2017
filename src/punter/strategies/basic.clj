@@ -2,6 +2,10 @@
   (require [punter.graph :as graph]
            [punter.strategies.core :refer [StrategyProto]]))
 
+(defn ->keyword
+  [num]
+  (-> num str keyword))
+
 (defn- format-move
   "Post processing move"
   [{:keys [punter] :as <strategy>} move]
@@ -30,10 +34,11 @@
                        (into {}))]
     (loop [[mine & rest] (seq mines)
            distances     distances]
-      (if mine
-        (recur rest (assoc-in distances [mine :distance] (reduce + (map #(graph/distance graph mine %) mines))))
-        (let [{:keys [mine edges]} (apply min-key :distance (vals distances))]
-          {:source mine :target (first edges)})))))
+        (if mine
+          (let [mine (->keyword mine)]
+            (recur rest (assoc-in distances [mine :distance] (reduce + (map #(graph/distance graph mine (->keyword %)) mines)))))
+          (let [{:keys [mine edges]} (apply min-key :distance (vals distances))]
+            {:source mine :target (first edges)})))))
 
 (defn- score-for-vertex
   [{:keys [owned-mines] :as graph} vertex]
@@ -55,6 +60,11 @@
             (recur rest best-move))))
       (dissoc best-move :score))))
 
+(defmacro log [& args]
+  `(dosync
+     (binding [*out* *err*]
+       (println ~@args))))
+
 (defn sync-state
   "Syncs state with moves made by enemies"
   [{:keys [handled-moves] me :punter :as <strategy>} {:keys [moves]}]
@@ -69,6 +79,7 @@
 (defn move*
   "Basic strategy"
   [{:keys [my-moves] :as <strategy>} moves]
+
   (let [strategy (sync-state <strategy> moves)
         move     (if (= 0 my-moves)
                    (choose-best-first-move strategy)
@@ -83,3 +94,13 @@
     (move* this moves)))
 
 (defn ->make [] (->BasicStrategy))
+
+(defn update-values
+  [m]
+  (reduce (fn [r [k v]] (assoc r k (set v))) {} m))
+
+(defn import
+  [state]
+  (-> state
+      (update-in [:graph :mines] set)
+      (update-in [:graph :edges] #(update-values %))))
