@@ -48,5 +48,5 @@
     (log "tcp/read-msg:" msg)
     msg))
 
-(defn read-line [conn]
+(defn readln [conn]
   (.readLine (:in conn)))

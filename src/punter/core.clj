@@ -11,21 +11,15 @@
 (def host "punter.inf.ed.ac.uk")
 (def username "Lambda Riot")
 
+(declare play-online)
+(declare play-offline)
+(declare play)
+
 (defn -main [& args]
   (log "starting Lambda Riot punter")
   (log "args:" args)
   (log "punter initialized")
-  (api/init nil username)
-  (let [{:keys [in out]} (tcp/connect *in* *out*)
-        you (.readLine in)
-        _ (log you)
-        state (.readLine in) 
-        _ (log state)
-        _ (api/ready nil (:punter state))]
-    (while true 
-      (let [move (.readLine in)]
-        (log move)
-        (api/pass nil 0)))))
+  (play-offline))  
 
 (defn stop? [msg]
   (contains? msg :stop))
@@ -39,10 +33,16 @@
         _ (api/ready conn (:punter state))]
     state))
 
-(defn play [port]
+(defn play-offline []
+  (log "connecting offline")
+  (play (tcp/connect *in* *out*)))
+
+(defn play-online [port]
   (log "connecting:" (str host ":" port))
-  (let [conn (tcp/connect-online host port)
-        initial-state (handshake conn)
+  (play (tcp/connect-online host port)))
+
+(defn play [conn]
+  (let [initial-state (handshake conn)
         game-state (atom (utils/->game-state initial-state))
         punter (:punter @game-state)
         move (atom (api/recv-msg conn))]

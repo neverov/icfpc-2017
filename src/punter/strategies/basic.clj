@@ -2,7 +2,7 @@
   (require [punter.graph :as graph]
            [punter.strategies.core :refer [StrategyProto]]))
 
-(defn- format
+(defn- format-move
   "Post processing move"
   [{:keys [punter] :as <strategy>} move]
   {:state <strategy> :claim (assoc move :punter punter)})
@@ -18,7 +18,7 @@
   (let [strategy (-> <strategy>
                      (update :my-moves inc)
                      (update :graph #(graph/claim % source target)))]
-    (format strategy move)))
+    (format-move strategy move)))
 
 (defn choose-best-first-move
   "Selects first move for given state"

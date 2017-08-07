@@ -8,13 +8,12 @@
   (let [body (generate-string payload)
         length (inc (count body))
         msg (str length ":" body "\n")]
-    ;(tcp/write conn msg)))
-    (println msg)))
+    (tcp/write conn msg)))
 
 (defn recv-msg [conn]
-  (let [resp (tcp/read-line conn)
-        payload (second (clojure.string/split resp #":" 2))
-        msg (parse-string payload true)]
+  (let [resp (tcp/read-msg conn)
+        ;payload (second (clojure.string/split resp #":" 2))
+        msg (parse-string resp true)]
     msg))
 
 (defn init [conn name]
