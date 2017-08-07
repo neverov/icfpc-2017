@@ -39,7 +39,7 @@
   (let [graph (-> {}
                   (#'graph/add-edge 1 2)
                   (#'graph/add-edge 2 3)
-                  (->> (assoc {} :edges)))]
+                  (->> (assoc {:allowed #{} :owned-mines [] :mines #{}} :edges)))]
     (is (= 2 (graph/free-degree graph 2)))
 
     (let [graph (graph/claim graph 1 2)]
@@ -50,12 +50,12 @@
                   (#'graph/add-edge 1 2)
                   (#'graph/add-edge 2 3)
                   (#'graph/add-edge 1 4)
-                  (->> (assoc {:allowed #{}} :edges)))]
+                  (->> (assoc {:allowed #{} :owned-mines [] :mines #{}} :edges)))]
     (is (= 2 (graph/free-degree graph 2)))
     (is (= #{} (:allowed graph)))
     (let [graph (graph/claim graph 1 2)]
       (is (= 1 (graph/free-degree graph 2)))
-      (is (= #{1 2 3 4} (:allowed graph))))))
+      (is (= '([4 1] [2 1] [1 2] [3 2]) (:allowed graph))))))
 
 (deftest build-test
   (let [map' {:sites [{:id 0, :x 0.0, :y 0.0} {:id 1, :x 1.0, :y 0.0}
@@ -70,9 +70,9 @@
                        {:source 7, :target 5} {:source 5, :target 3}],
               :mines [1 5]}
         graph (graph/build {:punter 0 :punters [2] :map map'})]
-    (is (= #{1 5}         (:mines graph)))
-    (is (= {}             (:busy graph)))
-    (is (= #{}            (:allowed graph)))
+    (is (= #{1 5} (:mines graph)))
+    (is (= {}     (:busy graph)))
+    (is (= []     (:allowed graph)))
     (is (= {0 #{7 1},
             1 #{0 7 3 2},
             2 #{1 3},
