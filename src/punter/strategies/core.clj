@@ -1,5 +1,5 @@
 (ns punter.strategies.core)
 
 (defprotocol StrategyProto
-  (init [game])
-  (move [<strategy> moves]))
+  (init [this game])
+  (move [this moves]))

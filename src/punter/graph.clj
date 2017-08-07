@@ -104,3 +104,12 @@
   [<graph> vertex]
   (- (count (adjacents <graph> vertex))
      (count (get-in <graph> [:busy vertex] #{}))))
+
+(defn distance
+  [<graph> from to]
+  (-> <graph> :distances (get from) (get to)))
+
+(defn free-edges
+  [<graph> vertex]
+  (->> (adjacents <graph> vertex)
+       (remove #(busy? <graph> vertex %))))

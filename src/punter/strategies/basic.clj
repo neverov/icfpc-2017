@@ -1,6 +1,6 @@
 (ns punter.strategies.basic
-  (require [punter.graph :as graph])
-  (:import (punter.strategies.core StrategyProto)))
+  (require [punter.graph :as graph]
+           [punter.strategies.core :refer [StrategyProto]]))
 
 (defn- format
   "Post processing move"
@@ -14,40 +14,42 @@
 
 (defn make-move
   "Updates internal state according to chosen move"
-  [<strategy> move]
+  [<strategy> {:keys [source target] :as move}]
   (let [strategy (-> <strategy>
                      (update :my-moves inc)
-                     (update :graph #(graph/claim % move)))]
+                     (update :graph #(graph/claim % source target)))]
     (format strategy move)))
 
 (defn choose-best-first-move
   "Selects first move for given state"
   [{{:keys [mines] :as graph} :graph :as <strategy>}]
-  (let [distances (->> (map #(hash-map :mine % :edges :distance 0) mines)
+  (let [distances (->> (map #(hash-map :mine % :distance 0) mines)
+                       (map #(assoc % :edges (graph/free-edges graph (:mine %))))
                        (remove #(= 0 (graph/free-degree graph (:mine %))))
-                       (map #([(:mine %) %]))
+                       (map #(vector (:mine %) %))
                        (into {}))]
-    (loop [[mine & rest] mines
+    (loop [[mine & rest] (seq mines)
            distances     distances]
       (if mine
-        (recur rest (assoc-in distances [mine :distance] (reduce + (map #(-> graph :distances mine %) mines))))
-        (let [mine (:mine (min-key :distance (vals distances)))])))))
+        (recur rest (assoc-in distances [mine :distance] (reduce + (map #(graph/distance graph mine %) mines))))
+        (let [{:keys [mine edges]} (apply min-key :distance (vals distances))]
+          {:source mine :target (first edges)})))))
 
-(def choose-best-move
+(defn choose-best-move
   "Selects next move for given state"
   [<strategy>])
   ; TODO
 
 (defn sync-state
   "Syncs state with moves made by enemies"
-  [{:keys [handled-moves] :as <strategy>} moves]
-  (loop [[{{:keys [source target]} :claim pass :pass} & rest] (drop handled-moves moves)
-         strategy                                             <strategy>]
-    (if pass
+  [{:keys [handled-moves] me :punter :as <strategy>} {:keys [moves]}]
+  (loop [[{{:keys [source target punter] :as claim} :claim pass :pass} & rest] (drop handled-moves moves)
+         strategy <strategy>]
+    (if (or pass (= punter me))
       (recur rest strategy)
-      (if source
+      (if claim
         (recur rest (update strategy :graph #(graph/mark-as-busy % source target)))
-        (assoc strategy :handled-moves moves)))))
+        (assoc strategy :handled-moves (count moves))))))
 
 (defn move*
   "Basic strategy"
@@ -60,9 +62,9 @@
 
 (defrecord BasicStrategy []
   StrategyProto
-  (init [game]
+  (init [_ game]
     (init* game))
-  (move [<strategy> moves]
-    (move* <strategy> moves)))
+  (move [this moves]
+    (move* this moves)))
 
 (defn ->make [] (->BasicStrategy))
