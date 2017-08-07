@@ -105,3 +105,9 @@
 (deftest choose-best-first-move-test
   (let [strategy (strategy complicated-game)]
     (is (= {:source 27, :target 24} (basic/choose-best-first-move strategy)))))
+
+(deftest choose-best-move-test
+  (let [strategy (-> (strategy complicated-game)
+                     (basic/make-move {:source 27, :target 24})
+                     :state)]
+    (is (= {:source 0, :target 24} (basic/choose-best-move strategy)))))

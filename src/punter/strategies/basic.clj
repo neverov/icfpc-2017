@@ -35,10 +35,25 @@
         (let [{:keys [mine edges]} (apply min-key :distance (vals distances))]
           {:source mine :target (first edges)})))))
 
+(defn- score-for-vertex
+  [{:keys [owned-mines] :as graph} vertex]
+  (->> (map #(graph/distance graph % vertex) owned-mines)
+       (map #(* % %))
+       (reduce +)))
+
 (defn choose-best-move
   "Selects next move for given state"
-  [<strategy>])
-  ; TODO
+  [{{:keys [allowed] :as graph} :graph}]
+  (loop [[[source target] & rest] allowed
+         best-move     {:score 0}]
+    (if source
+      (if (graph/busy? graph source target)
+        (recur rest best-move)
+        (let [score (score-for-vertex graph target)]
+          (if (> score (:score best-move))
+            (recur rest {:score score :source source :target target})
+            (recur rest best-move))))
+      (dissoc best-move :score))))
 
 (defn sync-state
   "Syncs state with moves made by enemies"

@@ -64,7 +64,7 @@
   "Builds graph from game's map"
   [{:keys [punter punters] {:keys [sites rivers mines]} :map}]
   (let [vertices (map :id sites)
-        graph (-> (transient {:mines (set mines) :edges {} :busy {} :allowed #{} :distances {}})
+        graph (-> (transient {:mines (set mines) :owned-mines [] :edges {} :busy {} :allowed [] :distances {}})
                   (assoc! :punters punters)
                   (assoc! :punter punter)
                   (assoc! :vertices vertices)
@@ -85,14 +85,20 @@
       (update-in [:busy source] #(if % (conj % target) #{target}))
       (update-in [:busy target] #(if % (conj % source) #{source}))))
 
+(defn edges
+  [<graph> vertex]
+  (map #(vector % vertex) (adjacents <graph> vertex)))
+
 (defn claim
   "Claims an edge. Returns updated graph"
-  [<graph> source target]
-  (-> <graph>
+  [{:keys [mines] :as <graph>} source target]
+  (-> (cond-> <graph>
+        (mines source) (update :owned-mines #(conj % source))
+        (mines target) (update :owned-mines #(conj % target)))
       (mark-as-busy source target)
-      (update :allowed #(set/union %
-                                   (adjacents <graph> source)
-                                   (adjacents <graph> target)))))
+      (update :allowed #(concat %
+                                (edges <graph> source)
+                                (edges <graph> target)))))
 
 (defn busy?
   "Checks whether edge is busy"
