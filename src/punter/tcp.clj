@@ -18,7 +18,7 @@
     (connect in out)))
 
 (defn write [conn msg]
-  (println "sending message:" msg)
+  (log "sending message:" msg)
   (doto (:out conn)
     (.write msg 0 (count msg))
     (.flush)))
@@ -36,15 +36,16 @@
   (loop [length 0
          string ""]
     (if (< length amount)
-      (recur (+ 1 length)
+      (recur (inc length)
              (str string (-> input-stream .read char)))
       string)))
 
 (defn read-msg
-  [input-stream]
-  (let [length (-> (read-until input-stream \:)
+  [conn]
+  (let [in (:in conn)
+        length (-> (read-until in \:)
                    read-string)
-        msg (read-symbols input-stream length)]
+        msg (read-symbols in length)]
     (log "tcp/read-msg:" msg)
     msg))
 

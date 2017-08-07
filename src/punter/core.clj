@@ -17,15 +17,14 @@
 
 (defn -main [& args]
   (log "starting Lambda Riot punter")
-  (log "args:" args)
-  (log "punter initialized")
   (play-offline))  
 
 (defn stop? [msg]
   (contains? msg :stop))
 
 (defn handshake [conn]
-  (let [_ (api/init conn username)
+  (let [_ (log "sending init")
+        _ (api/init conn username)
         you (api/recv-you conn)
         _ (log "received you:" you)
         state (api/recv-state conn)

@@ -2,7 +2,8 @@
   (:gen-class)
   (:require [clojure.tools.namespace.repl :refer [refresh]]
             [cheshire.core :refer [generate-string parse-string]]
-            [punter.tcp :as tcp]))
+            [punter.tcp :as tcp]
+            [punter.util :refer [log]]))
 
 (defn send-msg [conn payload]
   (let [body (generate-string payload)
