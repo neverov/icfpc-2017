@@ -8,7 +8,7 @@
   (let [body (generate-string payload)
         length (inc (count body))
         msg (str length ":" body "\n")]
-    ;(tcp/write conn msg)))
+    (tcp/write conn msg)
     (println msg)))
 
 (defn recv-msg [conn]

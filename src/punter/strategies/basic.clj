@@ -69,6 +69,7 @@
 (defn move*
   "Basic strategy"
   [{:keys [my-moves] :as <strategy>} moves]
+  (clojure.pprint/pprint moves)
   (let [strategy (sync-state <strategy> moves)
         move     (if (= 0 my-moves)
                    (choose-best-first-move strategy)
